@@ -38,4 +38,4 @@ class Request {
   int get hashCode => url.hashCode ^ query.hashCode ^ type.hashCode;
 }
 
-enum RequestType { query, mutation, subscription, none }
+enum RequestType { query, mutation, subscription, none, subscribe }
