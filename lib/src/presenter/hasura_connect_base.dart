@@ -350,7 +350,8 @@ class HasuraConnect {
         'query': query.document,
         'variables': query.variables,
       },
-      'type': 'start'
+      'type': 'start',
+      'operationName': "userKeepAlive"
     });
   }
 
