@@ -220,7 +220,7 @@ class HasuraConnect {
   }
 
   ///Execute a Subscription from a Query
-  Future<Snapshot> executeSubscription(Query query) async {
+  Future<Snapshot> executeSubscription(Query query, bool isUserKeepAlive) async {
     Snapshot snapshot;
     if (snapmap.containsKey(query.key)) {
       snapshot = snapmap[query.key]!;
@@ -247,7 +247,7 @@ class HasuraConnect {
       _connect();
       await Future.delayed(Duration(milliseconds: 500));
     } else if (_isConnected) {
-      final input = querySubscription(snapshot.query);
+      final input = querySubscription(snapshot.query, isUserKeepAlive);
       sendToWebSocketServer(input);
     }
     return snapshot;
@@ -263,7 +263,7 @@ class HasuraConnect {
   Future _changeVariables(Snapshot snapshot) async {
     var stop = {'id': snapshot.query.key, 'type': 'stop'};
     if (isConnected) sendToWebSocketServer(jsonEncode(stop));
-    if (isConnected) sendToWebSocketServer(querySubscription(snapshot.query));
+    if (isConnected) sendToWebSocketServer(querySubscription(snapshot.query, false));
   }
 
   @visibleForTesting
@@ -343,17 +343,29 @@ class HasuraConnect {
   }
 
   @visibleForTesting
-  String querySubscription(Query query) {
+  String querySubscription(Query query, bool isUserKeepAlive) {
+    if (isUserKeepAlive) {
+      return jsonEncode({
+        'id': query.key,
+        'payload': {
+          'query': query.document,
+          'variables': query.variables,
+          'operationName': 'userKeepAlive'
+        },
+        'type': 'start'
+      });
+    }
+
     return jsonEncode({
       'id': query.key,
       'payload': {
         'query': query.document,
-        'variables': query.variables,
-        'operationName': 'userKeepAlive'
+        'variables': query.variables
       },
       'type': 'start'
     });
   }
+
 
   @visibleForTesting
   Future<void> normalizeStreamValue(Map data) async {
@@ -364,7 +376,7 @@ class HasuraConnect {
       _numbersOfConnectionAttempts = 0;
       _isConnected = true;
       for (var snap in snapmap.values) {
-        sendToWebSocketServer(querySubscription(snap.query));
+        sendToWebSocketServer(querySubscription(snap.query, false));
       }
     } else if (data['type'] == 'connection_error') {
       await Future.delayed(Duration(seconds: 2));
