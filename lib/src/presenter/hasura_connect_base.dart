@@ -207,7 +207,7 @@ class HasuraConnect {
 
   ///Execute a Subscription from a Document
   Future<Snapshot> subscription(String document,
-      {String? key, Map<String, dynamic>? variables, Map<String, String>? headers}) async {
+      {String? key, Map<String, dynamic>? variables, Map<String, String>? headers, bool isUserKeepAlive = false}) async {
     document = document.trim();
     key = key ?? _keyGenerator.generateBase(document);
 
@@ -216,7 +216,7 @@ class HasuraConnect {
       headers: headers,
       document: document,
       variables: variables,
-    ));
+    ), isUserKeepAlive);
   }
 
   ///Execute a Subscription from a Query
