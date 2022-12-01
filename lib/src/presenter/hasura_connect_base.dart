@@ -263,7 +263,7 @@ class HasuraConnect {
   Future _changeVariables(Snapshot snapshot) async {
     var stop = {'id': snapshot.query.key, 'type': 'stop'};
     if (isConnected) sendToWebSocketServer(jsonEncode(stop));
-    if (isConnected) sendToWebSocketServer(querySubscription(snapshot.query, false));
+    if (isConnected) sendToWebSocketServer(querySubscription(snapshot.query));
   }
 
   @visibleForTesting
@@ -344,8 +344,8 @@ class HasuraConnect {
 
   @visibleForTesting
   String querySubscription(Query query) {
-    if(query.variables['operationName'] != null) {
-      query.variables.removeWhere((key, value) => key == "operationName" && value == 'userKeepAlive');
+    if(query.variables != null && query.variables?['operationName'] != null) {
+      query.variables?.removeWhere((key, value) => key == "operationName" && value == 'userKeepAlive');
 
       return jsonEncode({
         'id': query.key,
@@ -378,7 +378,7 @@ class HasuraConnect {
       _numbersOfConnectionAttempts = 0;
       _isConnected = true;
       for (var snap in snapmap.values) {
-        sendToWebSocketServer(querySubscription(snap.query, false));
+        sendToWebSocketServer(querySubscription(snap.query));
       }
     } else if (data['type'] == 'connection_error') {
       await Future.delayed(Duration(seconds: 2));
