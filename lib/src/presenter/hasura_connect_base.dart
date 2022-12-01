@@ -207,7 +207,7 @@ class HasuraConnect {
 
   ///Execute a Subscription from a Document
   Future<Snapshot> subscription(String document,
-      {String? key, Map<String, dynamic>? variables, Map<String, String>? headers, bool isUserKeepAlive = false}) async {
+      {String? key, Map<String, dynamic>? variables, Map<String, String>? headers}) async {
     document = document.trim();
     key = key ?? _keyGenerator.generateBase(document);
 
@@ -216,11 +216,11 @@ class HasuraConnect {
       headers: headers,
       document: document,
       variables: variables,
-    ), isUserKeepAlive);
+    ));
   }
 
   ///Execute a Subscription from a Query
-  Future<Snapshot> executeSubscription(Query query, bool isUserKeepAlive) async {
+  Future<Snapshot> executeSubscription(Query query) async {
     Snapshot snapshot;
     if (snapmap.containsKey(query.key)) {
       snapshot = snapmap[query.key]!;
@@ -247,7 +247,7 @@ class HasuraConnect {
       _connect();
       await Future.delayed(Duration(milliseconds: 500));
     } else if (_isConnected) {
-      final input = querySubscription(snapshot.query, isUserKeepAlive);
+      final input = querySubscription(snapshot.query);
       sendToWebSocketServer(input);
     }
     return snapshot;
@@ -343,8 +343,10 @@ class HasuraConnect {
   }
 
   @visibleForTesting
-  String querySubscription(Query query, bool isUserKeepAlive) {
-    if (isUserKeepAlive) {
+  String querySubscription(Query query) {
+    if(query.variables['operationName'] != null) {
+      query.variables.removeWhere((key, value) => key == "operationName" && value == 'userKeepAlive');
+
       return jsonEncode({
         'id': query.key,
         'payload': {
